@@ -128,3 +128,34 @@ else:
         with tab2:
             fig_tech = px.line(df, x="created_at", y=["psi_mobile_score", "overall_score"], markers=True)
             st.plotly_chart(fig_tech, use_container_width=True)
+
+    # ... (Indsæt under dine eksisterende grafer)
+
+    st.divider()
+
+    # Hent nyeste data for hver VIP side
+    vip_data = supabase.table("page_performance")\
+        .select("*")\
+        .order("created_at", desc=True)\
+        .limit(50)\
+        .execute()
+
+    if vip_data.data:
+        df_vip = pd.DataFrame(vip_data.data)
+        # Vis kun den nyeste dato (et snapshot af situationen lige nu)
+        latest_date = df_vip['created_at'].max()
+        df_latest = df_vip[df_vip['created_at'] == latest_date].sort_values('clicks', ascending=False)
+
+    # Vis som en lækker tabel
+    st.dataframe(
+        df_latest[['page_name', 'clicks', 'impressions', 'ctr', 'position']],
+        column_config={
+            "page_name": "Side",
+            "clicks": st.column_config.NumberColumn("Klik", format="%d"),
+            "impressions": st.column_config.NumberColumn("Visninger", format="%d"),
+            "ctr": st.column_config.ProgressColumn("CTR", format="%.2f%%", min_value=0, max_value=0.05),
+            "position": st.column_config.NumberColumn("Ranking", format="%.1f"),
+        },
+        hide_index=True,
+        use_container_width=True
+    )
